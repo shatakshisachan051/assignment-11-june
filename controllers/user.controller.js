@@ -6,6 +6,8 @@ const jwt= require("jsonwebtoken")
 
 require("dotenv").config();
 
+
+// registering users
 const registerUser= async(req,res)=>{
      const {name, email, password,role}= req.body;
 
@@ -41,4 +43,48 @@ const registerUser= async(req,res)=>{
 
 }
 
-module.exports= {registerUser};
+
+// login users
+
+const loginUser= async (req,res)=>{
+
+    const {email, password}= req.body;
+    console.log(" attempted login", email);
+
+   try {
+     const user = await User.findOne({email});
+ 
+ 
+     if(!user){
+         console.log(" user not found ");
+         return res.status(404).json({msg: "Invalid credentiial- user not found"})
+     }
+ 
+     const match = await bcrypt.compare(password,user.password);
+ 
+     // checking password
+     if(!match){
+         console.log(" password not correct");
+ 
+         return res.status(401).json({msg:"Invaild credentials"});
+     }
+ 
+     const token = jwt.sign(
+         { userId: user._id,role: user.role },process.env.JWT_SECRET,{expiresIn: "1h"}
+     );
+ 
+ 
+     console.log("login success- ",user.email);
+ 
+     res.status(200).json({msg:"Login successfull", token});
+ 
+   } catch (error) {
+        console.log("login failed- ",err.message)
+
+        res.status(500).json({msg: "Server error"});
+   }
+
+
+}
+
+module.exports= {registerUser, loginUser};
